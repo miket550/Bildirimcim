@@ -8,87 +8,74 @@ from threading import Thread
 import time
 import re
 
-# ====== AYARLAR ======
 TELEGRAM_BOT_TOKEN = '8075438517:AAH2V8mWVH9OY1qcj3QJ6CcwmERviQpGjuA'
 CHAT_ID = '944442637'
-SURE = 120  # 2 dakika
 
-SITELER = [
+DUYURU_SITELERI = [
     {
-        "isim": "F.Ü - Ana Sayfa",
-        "ana_sayfa": "https://www.firat.edu.tr/tr",
-        "duyuru_url": "https://www.firat.edu.tr/tr/page/announcement",
-        "base": "https://www.firat.edu.tr",
-        "baslik_secici": "h2.title",
-        "tarih_secici": ".news-date"
+        'fakulte': 'F.Ü - Ana Sayfa',
+        'duyuru_url': 'https://www.firat.edu.tr/tr/page/announcement',
+        'link_selector': '.news-list a',
+        'baslik_selector': 'h2.title',
+        'tarih_selector': '.news-date'
     },
     {
-        "isim": "F.Ü - İİBF",
-        "ana_sayfa": "https://iibf.firat.edu.tr",
-        "duyuru_url": "https://iibf.firat.edu.tr/announcements-all",
-        "base": "https://iibf.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Mühendislik Fakültesi',
+        'duyuru_url': 'https://muhendislikf.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Mühendislik",
-        "ana_sayfa": "https://muhendislikf.firat.edu.tr",
-        "duyuru_url": "https://muhendislikf.firat.edu.tr/announcements-all",
-        "base": "https://muhendislikf.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - İktisadi ve İdari Bilimler Fakültesi',
+        'duyuru_url': 'https://iibf.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Teknoloji Fakültesi",
-        "ana_sayfa": "https://teknolojif.firat.edu.tr",
-        "duyuru_url": "https://teknolojif.firat.edu.tr/announcements-all",
-        "base": "https://teknolojif.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Teknoloji Fakültesi',
+        'duyuru_url': 'https://teknolojif.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Öğrenci DB",
-        "ana_sayfa": "https://ogrencidb.firat.edu.tr",
-        "duyuru_url": "https://ogrencidb.firat.edu.tr/announcements-all",
-        "base": "https://ogrencidb.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Öğrenci İşleri Daire Başkanlığı',
+        'duyuru_url': 'https://ogrencidb.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Öğrenci Dekanlığı",
-        "ana_sayfa": "https://ogrencidekanligi.firat.edu.tr",
-        "duyuru_url": "https://ogrencidekanligi.firat.edu.tr/announcements-all",
-        "base": "https://ogrencidekanligi.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Öğrenci Dekanlığı',
+        'duyuru_url': 'https://ogrencidekanligi.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Yaz Okulu",
-        "ana_sayfa": "https://yazokuluyeni.firat.edu.tr",
-        "duyuru_url": "https://yazokuluyeni.firat.edu.tr/announcements-all",
-        "base": "https://yazokuluyeni.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Yaz Okulu Birimi',
+        'duyuru_url': 'https://yazokuluyeni.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Eğitim Fakültesi",
-        "ana_sayfa": "https://egitimf.firat.edu.tr/tr",
-        "duyuru_url": "https://egitimf.firat.edu.tr/tr/announcements-all",
-        "base": "https://egitimf.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Eğitim Fakültesi',
+        'duyuru_url': 'https://egitimf.firat.edu.tr/tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
     {
-        "isim": "F.Ü - Kütüphane",
-        "ana_sayfa": "https://kutuphanedb.firat.edu.tr",
-        "duyuru_url": "https://kutuphanedb.firat.edu.tr/announcements-all",
-        "base": "https://kutuphanedb.firat.edu.tr",
-        "baslik_secici": "div.new-section-detail-title h3",
-        "tarih_secici": "div.new-section-detail-date p"
+        'fakulte': 'F.Ü - Kütüphane ve Dokümantasyon Daire Başkanlığı',
+        'duyuru_url': 'https://kutuphanedb.firat.edu.tr/announcements-all',
+        'link_selector': 'div.other-news-card.mb-3 a[href*="announcements-detail"]',
+        'baslik_selector': 'div.new-section-detail-title h3',
+        'tarih_selector': 'div.new-section-detail-date p'
     },
 ]
-
-kayitli_linkler = {}
 
 app = Flask('')
 
@@ -108,56 +95,50 @@ def telegrama_gonder(mesaj, buton_linki=None):
     }
     if buton_linki:
         data['reply_markup'] = '{"inline_keyboard":[[{"text":"Duyuruya Git", "url":"' + buton_linki + '"}]]}'
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except Exception as e:
+        print("Telegram gönderim hatası:", e)
 
-def duyurulari_kontrol_et():
-    for site in SITELER:
-        try:
-            r = requests.get(site["duyuru_url"], timeout=10, verify=False)
-            soup = BeautifulSoup(r.text, 'html.parser')
-            duyurular = soup.select('a[href*="announcements-detail"]')
-            if not duyurular:
-                print(f"⚠️ Duyuru bulunamadı: {site['isim']}")
-                continue
+def duyuru_bilgilerini_getir(site):
+    try:
+        response = requests.get(site['duyuru_url'], timeout=10, verify=False)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        duyurular = soup.select(site['link_selector'])
 
-            ilk_duyuru = duyurular[0]
-            link = ilk_duyuru.get("href")
-            if not link.startswith("http"):
-                link = site["base"] + link
+        if not duyurular:
+            print(f"⚠️ {site['fakulte']}: Duyuru bulunamadı.")
+            return
 
-            if kayitli_linkler.get(site["isim"]) == link:
-                continue
-            kayitli_linkler[site["isim"]] = link
+        duyuru = duyurular[0]
+        link = duyuru['href'] if duyuru.has_attr('href') else ''
+        if not link.startswith('http'):
+            base = site['duyuru_url'].split('/announcements-all')[0].split('/tr')[0]
+            link = base + link
 
-            detay_html = requests.get(link, verify=False).text
-            detay_soup = BeautifulSoup(detay_html, "html.parser")
+        detay = requests.get(link, verify=False)
+        detay_soup = BeautifulSoup(detay.text, 'html.parser')
 
-            # Başlık
-            baslik_tag = detay_soup.select_one(site["baslik_secici"])
-            baslik = baslik_tag.get_text(strip=True) if baslik_tag else "Başlık bulunamadı"
+        baslik_tag = detay_soup.select_one(site['baslik_selector'])
+        baslik = baslik_tag.get_text(strip=True) if baslik_tag else 'Başlık bulunamadı'
 
-            # Tarih
-            tarih_tag = detay_soup.select_one(site["tarih_secici"])
-            if tarih_tag:
-                tarih = ''.join(tarih_tag.stripped_strings).replace("\n", "").replace(" ", "")
-            else:
-                tarih = "Tarih bulunamadı"
+        tarih_tag = detay_soup.select_one(site['tarih_selector'])
+        if tarih_tag:
+            tarih = ''.join([t.strip() for t in tarih_tag.stripped_strings])
+        else:
+            tarih = 'Tarih bulunamadı'
 
-            mesaj = f"<b>{site['isim']}</b>\n{baslik}\n📅 {tarih}"
-            telegrama_gonder(mesaj, link)
-            print(f"📨 Gönderildi: {site['isim']}")
+        mesaj = f"<b>{site['fakulte']}</b>\n{baslik}\n📅 {tarih}"
+        telegrama_gonder(mesaj, link)
+        print(f"✅ Gönderildi: {site['fakulte']}")
 
-        except Exception as e:
-            print(f"❌ HATA ({site['isim']}):", e)
-
-def donguyu_baslat():
-    while True:
-        duyurulari_kontrol_et()
-        time.sleep(SURE)
+    except Exception as e:
+        print(f"❗ {site['fakulte']} hata: {e}")
 
 print("🚀 Bot başlatıldı.")
-t1 = Thread(target=webserveri_baslat)
-t1.start()
+t = Thread(target=webserveri_baslat)
+t.start()
 
-t2 = Thread(target=donguyu_baslat)
-t2.start()
+for site in DUYURU_SITELERI:
+    duyuru_bilgilerini_getir(site)
+    time.sleep(1)
