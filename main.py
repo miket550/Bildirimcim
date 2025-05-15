@@ -111,7 +111,7 @@ def duyuruyu_gonder(fakulte):
         detay = requests.get(link, verify=False)
         detay_soup = BeautifulSoup(detay.text, 'html.parser')
 
-        baslik_tag = detay_soup.select_one('h1')
+        baslik_tag = detay_soup.select_one('h1') or detay_soup.select_one('h2.title')
         baslik = baslik_tag.get_text(strip=True) if baslik_tag else "Başlık bulunamadı"
 
         tarih_tag = detay_soup.select_one('div.new-section-detail-date p')
